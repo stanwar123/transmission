@@ -1,0 +1,44 @@
+{
+	"name": "AmazonS3Object1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AmazonS3_Source",
+			"type": "LinkedServiceReference"
+		},
+		"type": "AmazonS3Object",
+		"structure": [
+			{
+				"name": "Prop_0",
+				"type": "String"
+			},
+			{
+				"name": "Prop_1",
+				"type": "String"
+			},
+			{
+				"name": "Prop_2",
+				"type": "String"
+			},
+			{
+				"name": "Prop_3",
+				"type": "String"
+			},
+			{
+				"name": "Prop_4",
+				"type": "String"
+			}
+		],
+		"typeProperties": {
+			"format": {
+				"type": "TextFormat",
+				"columnDelimiter": ",",
+				"rowDelimiter": "",
+				"treatEmptyAsNull": true,
+				"skipLineCount": 0,
+				"firstRowAsHeader": true
+			},
+			"key": "AirportCodeLocationLookupClean.csv",
+			"bucketName": "demoact"
+		}
+	}
+}
