@@ -38,6 +38,14 @@
 			{
 				"name": "Notebook1",
 				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy Data1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "7.00:00:00",
 					"retry": 0,
@@ -57,6 +65,72 @@
 				"linkedServiceName": {
 					"referenceName": "AzureDatabricks1",
 					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Send Success Mail",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Notebook1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"typeProperties": {
+					"url": "https://prod-27.northcentralus.logic.azure.com:443/workflows/bca1fff1f7954f7885156e7caf765d92/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xSKSG83m1E1dbeVJ2oHLCYW63fbnyOL_iz5OxOLnRTg",
+					"method": "POST",
+					"headers": {
+						"Content-Type": "Application/json"
+					},
+					"body": {
+						"dataFactoryName": "@{pipeline().DataFactory}",
+						"successtype": "Succeeded",
+						"message": "@{activity('ETL').output.runPageUrl}",
+						"pipelineName": "@{pipeline().Pipeline}",
+						"recipient": "@{pipeline().parameters.recipient}"
+					}
+				}
+			},
+			{
+				"name": "Send Failure Mail",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Notebook1",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"typeProperties": {
+					"url": "https://prod-27.northcentralus.logic.azure.com:443/workflows/bca1fff1f7954f7885156e7caf765d92/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xSKSG83m1E1dbeVJ2oHLCYW63fbnyOL_iz5OxOLnRTg",
+					"method": "POST",
+					"headers": {
+						"Content-Type": "Application/json"
+					},
+					"body": {
+						"dataFactoryName": "@{pipeline().DataFactory}",
+						"successtype": "Failed",
+						"message": "@{activity('ETL').error.message}",
+						"pipelineName": "@{pipeline().Pipeline}",
+						"recipient": "@{pipeline().parameters.recipient}"
+					}
 				}
 			}
 		],
