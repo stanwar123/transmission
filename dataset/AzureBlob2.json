@@ -1,0 +1,11 @@
+{
+	"name": "AzureBlob2",
+	"properties": {
+		"type": "AzureBlob",
+		"typeProperties": {
+			"format": {
+				"type": "JsonFormat"
+			}
+		}
+	}
+}
