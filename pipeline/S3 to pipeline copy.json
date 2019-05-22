@@ -72,6 +72,10 @@
 			"fileName": {
 				"type": "string",
 				"defaultValue": "Product.csv"
+			},
+			"recipient": {
+				"type": "string",
+				"defaultValue": "sachintanwaraeso@gmail.com"
 			}
 		}
 	}
