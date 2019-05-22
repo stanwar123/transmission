@@ -59,6 +59,20 @@
 					"type": "LinkedServiceReference"
 				}
 			}
-		]
+		],
+		"parameters": {
+			"inputPath": {
+				"type": "string",
+				"defaultValue": "/staged_sink"
+			},
+			"outputPath": {
+				"type": "string",
+				"defaultValue": "/processed_sink"
+			},
+			"fileName": {
+				"type": "string",
+				"defaultValue": "Product.csv"
+			}
+		}
 	}
 }
