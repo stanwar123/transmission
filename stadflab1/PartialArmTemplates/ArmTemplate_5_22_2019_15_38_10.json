@@ -1,0 +1,174 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory Name",
+			"defaultValue": "stadflab1"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/S3 to pipeline copy')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy Data1",
+						"type": "Copy",
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"typeProperties": {
+							"source": {
+								"type": "FileSystemSource",
+								"recursive": true
+							},
+							"sink": {
+								"type": "BlobSink"
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "AmazonS3Object1",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "AzureBlob1",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Notebook1",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Copy Data1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"typeProperties": {
+							"notebookPath": "/Users/sactanwa@publicisgroupe.net/dataengineering with databricks/1 Datafactory ETL",
+							"baseParameters": {
+								"input": "@pipeline().parameters.inputPath",
+								"output": "@pipeline().parameters.outputPath",
+								"filename": "@pipeline().parameters.fileName",
+								"pipeline.RunId": "@pipeline().RunId"
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabricks1",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Send Success Mail",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Notebook1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"typeProperties": {
+							"url": "https://prod-27.northcentralus.logic.azure.com:443/workflows/bca1fff1f7954f7885156e7caf765d92/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xSKSG83m1E1dbeVJ2oHLCYW63fbnyOL_iz5OxOLnRTg",
+							"method": "POST",
+							"headers": {
+								"Content-Type": "Application/json"
+							},
+							"body": {
+								"dataFactoryName": "@{pipeline().DataFactory}",
+								"successtype": "Succeeded",
+								"message": "@{activity('ETL').output.runPageUrl}",
+								"pipelineName": "@{pipeline().Pipeline}",
+								"recipient": "@{pipeline().parameters.recipient}"
+							}
+						}
+					},
+					{
+						"name": "Send Failure Mail",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Notebook1",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"typeProperties": {
+							"url": "https://prod-27.northcentralus.logic.azure.com:443/workflows/bca1fff1f7954f7885156e7caf765d92/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xSKSG83m1E1dbeVJ2oHLCYW63fbnyOL_iz5OxOLnRTg",
+							"method": "POST",
+							"headers": {
+								"Content-Type": "Application/json"
+							},
+							"body": {
+								"dataFactoryName": "@{pipeline().DataFactory}",
+								"successtype": "Failed",
+								"message": "@{activity('ETL').error.message}",
+								"pipelineName": "@{pipeline().Pipeline}",
+								"recipient": "@{pipeline().parameters.recipient}"
+							}
+						}
+					}
+				],
+				"parameters": {
+					"inputPath": {
+						"type": "string",
+						"defaultValue": "/staged_sink"
+					},
+					"outputPath": {
+						"type": "string",
+						"defaultValue": "/processed_sink"
+					},
+					"fileName": {
+						"type": "string",
+						"defaultValue": "Product.csv"
+					},
+					"recipient": {
+						"type": "string",
+						"defaultValue": "sachintanwaraeso@gmail.com"
+					}
+				}
+			}
+		}
+	]
+}

@@ -15,9 +15,9 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'AzStorage_Staging'"
 		},
-		"AmazonS3_Source_properties_typeProperties_accessKeyId": {
-			"type": "string",
-			"defaultValue": "AKIAZ5Z44B5EZNFKVZB4"
+		"AzureDatabricks1_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks1'"
 		},
 		"AzureBlob1_properties_typeProperties_fileName": {
 			"type": "string",
@@ -26,6 +26,10 @@
 		"AzureBlob1_properties_typeProperties_folderPath": {
 			"type": "string",
 			"defaultValue": "blob1"
+		},
+		"AmazonS3_Source_properties_typeProperties_accessKeyId": {
+			"type": "string",
+			"defaultValue": "AKIAZ5Z44B5EZNFKVZB4"
 		},
 		"containerUri": {
 			"type": "string",
@@ -59,6 +63,9 @@
 					},
 					"AzStorage_Staging_connectionString": {
 						"value": "[parameters('AzStorage_Staging_connectionString')]"
+					},
+					"AzureDatabricks1_accessToken": {
+						"value": "[parameters('AzureDatabricks1_accessToken')]"
 					},
 					"AmazonS3_Source_properties_typeProperties_accessKeyId": {
 						"value": "[parameters('AmazonS3_Source_properties_typeProperties_accessKeyId')]"

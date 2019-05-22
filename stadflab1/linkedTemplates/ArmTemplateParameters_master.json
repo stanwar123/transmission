@@ -11,14 +11,17 @@
 		"AzStorage_Staging_connectionString": {
 			"value": ""
 		},
-		"AmazonS3_Source_properties_typeProperties_accessKeyId": {
-			"value": "AKIAZ5Z44B5EZNFKVZB4"
+		"AzureDatabricks1_accessToken": {
+			"value": ""
 		},
 		"AzureBlob1_properties_typeProperties_fileName": {
 			"value": ""
 		},
 		"AzureBlob1_properties_typeProperties_folderPath": {
 			"value": "blob1"
+		},
+		"AmazonS3_Source_properties_typeProperties_accessKeyId": {
+			"value": "AKIAZ5Z44B5EZNFKVZB4"
 		},
 		"containerUri": {
 			"value": ""

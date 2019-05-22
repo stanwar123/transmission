@@ -15,9 +15,9 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'AzStorage_Staging'"
 		},
-		"AmazonS3_Source_properties_typeProperties_accessKeyId": {
-			"type": "string",
-			"defaultValue": "AKIAZ5Z44B5EZNFKVZB4"
+		"AzureDatabricks1_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks1'"
 		},
 		"AzureBlob1_properties_typeProperties_fileName": {
 			"type": "string",
@@ -26,6 +26,10 @@
 		"AzureBlob1_properties_typeProperties_folderPath": {
 			"type": "string",
 			"defaultValue": "blob1"
+		},
+		"AmazonS3_Source_properties_typeProperties_accessKeyId": {
+			"type": "string",
+			"defaultValue": "AKIAZ5Z44B5EZNFKVZB4"
 		}
 	},
 	"variables": {
@@ -74,45 +78,134 @@
 								"parameters": {}
 							}
 						]
+					},
+					{
+						"name": "Notebook1",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Copy Data1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/sactanwa@publicisgroupe.net/dataengineering with databricks/1 Datafactory ETL",
+							"baseParameters": {
+								"input": "@pipeline().parameters.inputPath",
+								"output": "@pipeline().parameters.outputPath",
+								"filename": "@pipeline().parameters.fileName",
+								"pipeline.RunId": "@pipeline().RunId"
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabricks1",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Send Success Mail",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Notebook1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://prod-27.northcentralus.logic.azure.com:443/workflows/bca1fff1f7954f7885156e7caf765d92/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xSKSG83m1E1dbeVJ2oHLCYW63fbnyOL_iz5OxOLnRTg",
+							"method": "POST",
+							"headers": {
+								"Content-Type": "Application/json"
+							},
+							"body": {
+								"dataFactoryName": "@{pipeline().DataFactory}",
+								"successtype": "Succeeded",
+								"message": "@{activity('ETL').output.runPageUrl}",
+								"pipelineName": "@{pipeline().Pipeline}",
+								"recipient": "@{pipeline().parameters.recipient}"
+							}
+						}
+					},
+					{
+						"name": "Send Failure Mail",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Notebook1",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://prod-27.northcentralus.logic.azure.com:443/workflows/bca1fff1f7954f7885156e7caf765d92/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xSKSG83m1E1dbeVJ2oHLCYW63fbnyOL_iz5OxOLnRTg",
+							"method": "POST",
+							"headers": {
+								"Content-Type": "Application/json"
+							},
+							"body": {
+								"dataFactoryName": "@{pipeline().DataFactory}",
+								"successtype": "Failed",
+								"message": "@{activity('ETL').error.message}",
+								"pipelineName": "@{pipeline().Pipeline}",
+								"recipient": "@{pipeline().parameters.recipient}"
+							}
+						}
 					}
 				],
+				"parameters": {
+					"inputPath": {
+						"type": "string",
+						"defaultValue": "/staged_sink"
+					},
+					"outputPath": {
+						"type": "string",
+						"defaultValue": "/processed_sink"
+					},
+					"fileName": {
+						"type": "string",
+						"defaultValue": "Product.csv"
+					},
+					"recipient": {
+						"type": "string",
+						"defaultValue": "sachintanwaraeso@gmail.com"
+					}
+				},
 				"annotations": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/AmazonS3Object1')]",
-				"[concat(variables('factoryId'), '/datasets/AzureBlob1')]"
+				"[concat(variables('factoryId'), '/datasets/AzureBlob1')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDatabricks1')]"
 			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AmazonS3_Source')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AmazonS3",
-				"typeProperties": {
-					"serviceUrl": "",
-					"accessKeyId": "[parameters('AmazonS3_Source_properties_typeProperties_accessKeyId')]",
-					"secretAccessKey": {
-						"type": "SecureString",
-						"value": "[parameters('AmazonS3_Source_secretAccessKey')]"
-					}
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AzStorage_Staging')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobStorage",
-				"typeProperties": {
-					"connectionString": "[parameters('AzStorage_Staging_connectionString')]"
-				}
-			},
-			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/AmazonS3Object1')]",
@@ -191,6 +284,55 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/AzStorage_Staging')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AmazonS3_Source')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AmazonS3",
+				"typeProperties": {
+					"serviceUrl": "",
+					"accessKeyId": "[parameters('AmazonS3_Source_properties_typeProperties_accessKeyId')]",
+					"secretAccessKey": {
+						"type": "SecureString",
+						"value": "[parameters('AmazonS3_Source_secretAccessKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzStorage_Staging')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('AzStorage_Staging_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDatabricks1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://centralus.azuredatabricks.net",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDatabricks1_accessToken')]"
+					},
+					"existingClusterId": "0522-204455-snowy691"
+				}
+			},
+			"dependsOn": []
 		}
 	]
 }
